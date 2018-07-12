@@ -1,0 +1,75 @@
+version: "3"
+services:
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.3.1
+    container_name: elasticsearch
+    environment:
+      SERVER_NAME: elasticsearch
+      CLUSTER_NAME: docker-cluster
+      BOOTSTRAP_MEMORY_LOCK: "true"
+      ES_JAVA_OPTS: -Xms2G -Xmx2G
+      DISCOVERY_ZEN_PING_UNICAST_HOSTS: kibana,logstash
+      XPACK_MONITORING_ENABLED: "true"
+      XPACK_MONITORING_COLLECTION_ENABLED: "true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/elasticsearch
+    ports:
+      - 9200:9200
+    networks:
+      esnet:
+        aliases:
+          - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.3.1
+    container_name: kibana
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      CLUSTER_NAME: docker-cluster
+      BOOTSTRAP_MEMORY_LOCK: "true"
+      ES_JAVA_OPTS: -Xms2G -Xmx2G
+      XPACK_MONITORING_ENABLED: "true"
+      XPACK_MONITORING_COLLECTION_ENABLED: "true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/kibana
+    ports:
+      - 5601:5601
+    networks:
+      - esnet
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:6.3.1
+    container_name: logstash
+    environment:
+      SERVER_NAME: logstash
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      CLUSTER_NAME: docker-cluster
+      BOOTSTRAP_MEMORY_LOCK: "true"
+      ES_JAVA_OPTS: -Xms2G -Xmx2G
+      DISCOVERY_ZEN_PING_UNICAST_HOSTS: elasticsearch,kibana
+      XPACK_MONITORING_ENABLED: "true"
+      XPACK_MONITORING_COLLECTION_ENABLED: "true"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/logstash
+    networks:
+      - esnet
+
+volumes:
+  esdata:
+
+networks:
+  esnet:
